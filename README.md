@@ -96,10 +96,7 @@ La aplicación mostrará una gráfica interactiva con los datos reales y el pron
 
 - `models/model.pkl` 
 
-## Notas
 
-- Asegúrate de que los archivos `scaler.pkl`, `X_test.npy`, `y_test.npy` y `modelo_lstm.onnx` estén presentes en las rutas correctas.
-- No subas tus credenciales de AWS a ningún repositorio público.
 
 ---
 
