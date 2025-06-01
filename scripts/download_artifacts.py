@@ -1,12 +1,19 @@
+# filepath: scripts/download_artifacts.py
+#                 raise Exception("Failed to download model")
+
 import os
 import sys
 import boto3
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 def create_s3_client():
     """Crear cliente S3"""

@@ -1,24 +1,46 @@
-# Pronóstico de Serie de Tiempo para ETF SPY
+#  🧠 MLOPS_Model - Pronóstico de Serie de Tiempo para ETF SPY
 
 Este proyecto implementa un pipeline de MLOps para el pronóstico de la serie de tiempo del ETF SPY utilizando modelos LSTM exportados a ONNX, con visualización interactiva en Streamlit y gestión de artefactos en AWS S3.
 
-## Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```
 MLOPS_Model/
-├── app/
-│   └── app.py
+│
+├── app/                         # Lógica principal de la aplicación
+│   ├── app.py                   # Endpoint principal (API)
+│   ├── app_v2.py                # Versión avanzada de la API
+│   ├── model_loader.py          # Carga del modelo
+│   └── predictor.py             # Función de predicción
+│
 ├── config/
+│   └── settings.py              # Configuraciones generales del proyecto
+│
 ├── models/
-│   └── modelo_lstm.onnx
-├── artifacts/
-│   ├── scaler.pkl
-│   ├── X_test.npy
-│   └── y_test.npy
-├── scripts/
-│   └── download_artifacts.py
-├── requirements.txt
-└── Dockerfile
+│   └── model.pkl                # Modelo entrenado serializado
+│
+├── pruebas/
+│   ├── test_1.py                # Scripts de prueba independientes
+│   └── test_2.py
+│
+├── scripts/                     # Scripts de automatización
+│   ├── deploy_to_ecs.py        # Despliegue en AWS ECS
+│   ├── download_artifacts.py   # Descarga de artefactos
+│   └── health_check.py         # Verificación de salud del servicio
+│
+├── tests/                       # Pruebas unitarias y de integración
+│   ├── test_api.py
+│   ├── test_integration.py
+│   └── test_model.py
+│
+├── .github/workflows/
+│   └── deploy.yml              # Automatización de CI/CD con GitHub Actions
+│
+├── Dockerfile                  # Imagen de contenedor para el servicio
+├── docker-compose.yml          # Orquestación local
+├── requirements.txt            # Dependencias del proyecto
+├── README.md                   # Este documento
+└── .git/                       # Carpeta de control de versiones Git
 ```
 
 ## Descripción
@@ -30,7 +52,7 @@ MLOPS_Model/
 - **requirements.txt**: Lista de dependencias del proyecto.
 - **Dockerfile**: Permite construir una imagen reproducible para despliegue.
 
-## Requisitos
+## ⚙️ Requisitos
 
 - Python 3.9+
 - AWS credentials con permisos de lectura en el bucket S3 configurado
@@ -59,6 +81,10 @@ MLOPS_Model/
     AWS_DEFAULT_REGION=us-east-1
     S3_BUCKET_NAME=proyectofinalmlops
     ```
+
+-Si corres el proyecto con Docker y pasas el .env con "--env-file .env", las variables estarán disponibles.
+
+-Si corres localmente, asegúrate de cargar el .env (puedes usar "python-dotenv").
 
 4. Descarga los artefactos desde S3 (opcional si ya están en `artifacts/` y `models/`):
 

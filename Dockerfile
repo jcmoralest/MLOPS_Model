@@ -1,4 +1,6 @@
-# Dockerfile
+# filepath: Dockerfile
+# Dockerfile para la aplicación de Streamlit con dependencias de AWS y S3
+
 FROM python:3.9-slim
 
 # Argumentos de construcción

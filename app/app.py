@@ -1,3 +1,4 @@
+# filepath: app/app.py
 import os
 import boto3
 import torch
@@ -16,6 +17,10 @@ import sys
 import logging
 from pathlib import Path
 
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 # python -m pip install --upgrade pip
 # pip install streamlit matplotlib pandas onnxruntime boto3 joblib  torch datetime sklearn
@@ -31,10 +36,12 @@ from pathlib import Path
 #tempfile
 
 # Configura tu cliente S3 (si estás en local y no tienes IAM)
-s3 = boto3.client('s3',
-                  aws_access_key_id='AKIAWQYSU3LK2WICFH7E',
-                  aws_secret_access_key='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',
-                  region_name='us-east-1')  # Cambia según tu región
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
+)
 
 # Nombre del bucket y la ruta del archivo
 bucket_name = 'proyectofinalmlops'

@@ -1,3 +1,6 @@
+# filepath: config/settings.py
+# Configuración de la aplicación
+
 import os
 from dataclasses import dataclass
 from typing import Optional
