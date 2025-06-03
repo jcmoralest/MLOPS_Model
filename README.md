@@ -140,6 +140,6 @@ La aplicación mostrará una gráfica interactiva con los datos reales y el pron
 ---
 
 **Autores:**  
-- Jhonata Pacheco
+- Jonathan Pacheco
 - Julio Morales
 - ICESI - MLOps Proyecto Final
