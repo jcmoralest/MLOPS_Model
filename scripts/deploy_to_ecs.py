@@ -7,6 +7,10 @@ import boto3
 import argparse
 import logging
 from typing import Dict, Any
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)

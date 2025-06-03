@@ -43,23 +43,19 @@ s3 = boto3.client(
     region_name=os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
 )
 
-# Nombre del bucket y la ruta del archivo
-bucket_name = 'proyectofinalmlops'
-s3_key = 'entremamiento/scaler.pkl'
-
-# Update paths to use environment variables
-MODEL_PATH = os.getenv('MODEL_PATH', './models')
-ARTIFACTS_PATH = os.getenv('ARTIFACTS_PATH', './artifacts')
+bucket_name = os.getenv('S3_BUCKET_NAME')
+model_path = os.getenv('MODEL_PATH', './models')
+artifacts_path = os.getenv('ARTIFACTS_PATH', './artifacts')
 
 # Update file paths
-local_path = os.path.join(ARTIFACTS_PATH, 'scaler.pkl')
-model_path = os.path.join(MODEL_PATH, 'modelo_lstm.onnx')
-x_test_path = os.path.join(ARTIFACTS_PATH, 'X_test.npy')
-y_test_path = os.path.join(ARTIFACTS_PATH, 'y_test.npy')
+local_path = os.path.join(artifacts_path, 'scaler.pkl')
+model_path = os.path.join(model_path, 'modelo_lstm.onnx')
+x_test_path = os.path.join(artifacts_path, 'X_test.npy')
+y_test_path = os.path.join(artifacts_path, 'y_test.npy')
 
 
 # Descargar los archivos
-s3.download_file(bucket_name, s3_key, local_path)
+s3.download_file(bucket_name, 'entremamiento/scaler.pkl', local_path)
 s3.download_file(bucket_name, 'entremamiento/modelo_lstm.onnx', model_path)
 s3.download_file(bucket_name, 'datos/X_test.npy', x_test_path)
 s3.download_file(bucket_name, 'datos/y_test.npy', y_test_path)

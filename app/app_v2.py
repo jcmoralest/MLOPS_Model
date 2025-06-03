@@ -11,6 +11,8 @@ import matplotlib.dates as mdates
 from datetime import datetime, timedelta
 import logging
 from pathlib import Path
+import boto3
+from dotenv import load_dotenv
 
 # Agregar el directorio raíz al path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -22,6 +24,9 @@ from config.settings import Settings
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Cargar variables de entorno
+load_dotenv()
 
 class ETFPredictionApp:
     def __init__(self):

@@ -17,7 +17,7 @@ class ModelLoader:
     def __init__(self, settings):
         self.settings = settings
         self.s3_client = self._create_s3_client()
-        self.artifacts_dir = Path("artifacts")
+        self.artifacts_dir = Path(getattr(self.settings, "ARTIFACTS_PATH", "artifacts"))
         self.artifacts_dir.mkdir(exist_ok=True)
         
     def _create_s3_client(self):

@@ -14,6 +14,10 @@ import requests
 import argparse
 import logging
 from typing import Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)

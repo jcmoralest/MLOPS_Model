@@ -2,6 +2,12 @@
 
 Este proyecto implementa un pipeline de MLOps para el pronóstico de la serie de tiempo del ETF SPY utilizando modelos LSTM exportados a ONNX, con visualización interactiva en Streamlit y gestión de artefactos en AWS S3.
 
+## ¿Cómo funciona?
+1. El modelo LSTM es entrenado y exportado a ONNX.
+2. Los artefactos y el modelo se almacenan en AWS S3.
+3. La aplicación Streamlit descarga los artefactos y realiza la inferencia.
+4. El usuario puede visualizar los resultados y métricas desde la interfaz web.
+
 ## 📁 Estructura del Proyecto
 
 ```
@@ -118,14 +124,18 @@ streamlit run app/app.py
 
 La aplicación mostrará una gráfica interactiva con los datos reales y el pronóstico de los próximos 200 días para el ETF SPY.
 
+
 ## Archivos Vacíos Detectados
 
 - `models/model.pkl` 
 
 ## Notas
 
-- Asegúrate de que los archivos `scaler.pkl`, `X_test.npy`, `y_test.npy` y `modelo_lstm.onnx` estén presentes en las rutas correctas.
-- No subas tus credenciales de AWS a ningún repositorio público.
+- Colaborador: Asegúrate de que los archivos `scaler.pkl`, `X_test.npy`, `y_test.npy` y `modelo_lstm.onnx` estén presentes en las rutas correctas.
+- No subas las credenciales de AWS a ningún repositorio público.
+
+## Contribuciones
+¡Las contribuciones son bienvenidas! Por favor abre un issue o pull request para sugerencias o mejoras.
 
 ---
 

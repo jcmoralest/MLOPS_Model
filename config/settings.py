@@ -4,16 +4,19 @@
 import os
 from dataclasses import dataclass
 from typing import Optional
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @dataclass
 class Settings:
     """Configuración de la aplicación"""
     
     # AWS Configuration
-    AWS_ACCESS_KEY_ID: str = os.getenv('AWS_ACCESS_KEY_ID', 'AKIAWQYSU3LK2WICFH7E')
-    AWS_SECRET_ACCESS_KEY: str = os.getenv('AWS_SECRET_ACCESS_KEY', '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')
-    AWS_REGION: str = os.getenv('AWS_REGION', 'us-east-1')
-    S3_BUCKET: str = os.getenv('S3_BUCKET', 'proyectofinalmlops')
+    AWS_ACCESS_KEY_ID: str = os.getenv('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY: str = os.getenv('AWS_SECRET_ACCESS_KEY')
+    AWS_REGION: str = os.getenv('AWS_DEFAULT_REGION', 'us-east-1')
+    S3_BUCKET: str = os.getenv('S3_BUCKET_NAME', 'proyectofinalmlops')
     
     # Model Configuration
     MODEL_VERSION: str = os.getenv('MODEL_VERSION', 'v1.0.0')
@@ -36,6 +39,9 @@ class Settings:
     MIN_R2_SCORE: float = float(os.getenv('MIN_R2_SCORE', '0.85'))
     MAX_RMSE: float = float(os.getenv('MAX_RMSE', '10.0'))
     
+    # Artifacts Configuration
+    ARTIFACTS_PATH: str = os.getenv("ARTIFACTS_PATH", "artifacts")
+    
     def __post_init__(self):
         """Validar configuración después de la inicialización"""
         required_vars = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY']
@@ -53,3 +59,7 @@ class Settings:
     def log_level(self) -> str:
         """Nivel de logging basado en el ambiente"""
         return 'DEBUG' if self.DEBUG else 'INFO'
+
+settings = Settings()
+bucket = settings.S3_BUCKET
+artifacts_dir = settings.ARTIFACTS_PATH
