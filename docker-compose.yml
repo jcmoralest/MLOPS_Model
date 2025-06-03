@@ -1,0 +1,151 @@
+# filepath: docker-compose.yml
+# Docker Compose file for MLOps project with development and production environments
+# This file defines services for machine learning model deployment, reverse proxy, monitoring, and caching.
+version: '3.8'
+
+services:
+  # Servicio para ambiente de desarrollo
+  ml-model-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+        - ENVIRONMENT=dev
+    container_name: ml-model-dev
+    environment:
+      - ENVIRONMENT=dev
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=us-east-1
+      - S3_BUCKET_NAME=proyectofinalmlops
+      - MODEL_VERSION=v1.0.0-dev
+      - DEBUG=true
+    ports:
+      - "8502:8501"  # Puerto para desarrollo
+    volumes:
+      - ./logs:/app/logs
+      - dev_artifacts:/app/artifacts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ml-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml-dev.rule=Host(`ml-dev.localhost`)"
+      - "traefik.http.services.ml-dev.loadbalancer.server.port=8501"
+
+  # Servicio para ambiente de producción
+  ml-model-prod:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+        - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+        - ENVIRONMENT=prod
+    container_name: ml-model-prod
+    environment:
+      - ENVIRONMENT=prod
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=us-east-1
+      - S3_BUCKET_NAME=proyectofinalmlops
+      - MODEL_VERSION=v1.0.0
+      - DEBUG=false
+      - MIN_R2_SCORE=0.85
+      - MAX_RMSE=10.0
+    ports:
+      - "8501:8501"  # Puerto para producción
+    volumes:
+      - ./logs:/app/logs
+      - prod_artifacts:/app/artifacts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - ml-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ml-prod.rule=Host(`ml-prod.localhost`)"
+      - "traefik.http.services.ml-prod.loadbalancer.server.port=8501"
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+
+  # Reverse proxy para manejo de dominios
+  traefik:
+    image: traefik:v2.9
+    container_name: traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--log.level=INFO"
+    ports:
+      - "80:80"      # Puerto HTTP
+      - "8080:8080"  # Dashboard de Traefik
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - ml-network
+    restart: unless-stopped
+
+  # Servicio de monitoreo y logs
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    restart: unless-stopped
+    networks:
+      - ml-network
+
+  # Redis para cache (opcional, para optimización futura)
+  redis:
+    image: redis:7-alpine
+    container_name: ml-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - ml-network
+    command: redis-server --appendonly yes
+
+volumes:
+  dev_artifacts:
+    driver: local
+  prod_artifacts:
+    driver: local
+  portainer_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  ml-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

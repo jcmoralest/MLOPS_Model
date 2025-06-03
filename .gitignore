@@ -1,0 +1,66 @@
+# Entornos virtuales
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# Variables de entorno y credenciales
+.env
+*.env
+
+# Archivos de configuración de usuario
+*.local
+*.secret
+
+# Archivos de Python compilados
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos de logs y reportes
+*.log
+*.out
+*.err
+
+# Archivos de test y cobertura
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+
+# Modelos y artefactos grandes
+models/
+artifacts/
+*.onnx
+*.pkl
+*.npy
+
+# Archivos de salida de Streamlit
+.streamlit/
+
+# Archivos de Docker
+*.pid
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de Jupyter
+.ipynb_checkpoints
+
+# Archivos de VSCode
+.vscode/
+
+# Archivos de GitHub Actions
+.github/workflows/*.secrets
+
+# Otros archivos temporales
+*.swp
+*.swo
