@@ -142,4 +142,4 @@ La aplicación mostrará una gráfica interactiva con los datos reales y el pron
 **Autores:**  
 - Jonathan Pacheco
 - Julio Morales
-- ICESI - MLOps Proyecto Final
+- ICESI - MLOps Proyecto Final# Test CI/CD
