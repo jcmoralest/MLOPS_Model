@@ -20,6 +20,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from app.model_loader import ModelLoader
 from app.predictor import ETFPredictor
 from config.settings import Settings
+from app.prediction_logger import PredictionLogger
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +34,13 @@ class ETFPredictionApp:
         self.settings = Settings()
         self.model_loader = ModelLoader(self.settings)
         self.predictor = None
+        
+        # Inicializar el logger de predicciones
+        self.prediction_logger = PredictionLogger(
+            bucket_name=self.settings.S3_BUCKET,
+            aws_access_key_id=self.settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=self.settings.AWS_SECRET_ACCESS_KEY
+        )        
         self.setup_page()
         
     def setup_page(self):
@@ -105,12 +113,51 @@ class ETFPredictionApp:
         with st.spinner("Generando predicciones..."):
             predictions = self.predictor.predict(prediction_days)
             
+            # 🆕 LOGGING DE PREDICCIONES
+            try:
+                environment = os.getenv('ENVIRONMENT', 'dev')
+                # Guardar solo el resumen de predicciones (primeras 5 y últimas 5)
+                summary_predictions = {
+                    'total_days': prediction_days,
+                    'first_5': predictions[:5].tolist(),
+                    'last_5': predictions[-5:].tolist(),
+                    'min': float(predictions.min()),
+                    'max': float(predictions.max()),
+                    'mean': float(predictions.mean())
+                }
+                self.prediction_logger.log_prediction(
+                    str(summary_predictions),
+                    environment=environment
+                )
+                logger.info(f"Predictions logged to S3 for {environment} environment")
+            except Exception as e:
+                logger.error(f"Failed to log predictions: {e}")
+                # No interrumpir la aplicación si falla el logging
+            
         # Crear visualización
         fig = self.create_prediction_plot(predictions, prediction_days)
         st.pyplot(fig)
         
         # Mostrar estadísticas
         self.render_statistics(predictions)
+        
+        # 🆕 Mostrar historial de predicciones (opcional)
+        with st.expander("📊 Ver historial de predicciones"):
+            if st.button("Cargar historial"):
+                try:
+                    environment = os.getenv('ENVIRONMENT', 'dev')
+                    history = self.prediction_logger.get_prediction_history(
+                        environment=environment, 
+                        limit=10
+                    )
+                    if history:
+                        st.text("Últimas 10 predicciones:")
+                        for entry in history:
+                            st.text(entry)
+                    else:
+                        st.info("No hay historial de predicciones disponible")
+                except Exception as e:
+                    st.error(f"Error cargando historial: {str(e)}")
         
     def create_prediction_plot(self, predictions, prediction_days):
         """Crear el gráfico de predicciones"""

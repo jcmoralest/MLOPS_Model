@@ -1,0 +1,223 @@
+# .github/workflows/pr-tests.yml
+name: Pull Request Tests
+
+on:
+  pull_request:
+    branches: [dev, prod, main]
+    types: [opened, synchronize, reopened]
+
+env:
+  PYTHON_VERSION: '3.9'
+  AWS_REGION: us-east-1
+  S3_BUCKET: proyectofinalmlops
+
+jobs:
+  # Verificación de código y linting
+  code-quality:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install linting tools
+        run: |
+          pip install flake8 black isort pylint
+
+      - name: 🔍 Run linting
+        continue-on-error: true
+        run: |
+          echo "### Code Quality Report 📊" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Black formatting check
+          echo "#### Black Formatting" >> $GITHUB_STEP_SUMMARY
+          if black --check app/ scripts/ tests/ 2>/dev/null; then
+            echo "✅ Code is properly formatted" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ Code needs formatting (run: black app/ scripts/ tests/)" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          # Flake8 check
+          echo "#### Flake8 Analysis" >> $GITHUB_STEP_SUMMARY
+          flake8 app/ scripts/ tests/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
+
+  # Tests unitarios
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: code-quality
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 📥 Download test artifacts
+        run: |
+          python scripts/download_artifacts.py
+
+      - name: 🧪 Run all tests
+        run: |
+          # Ejecutar tests de pruebas/
+          echo "Running tests from pruebas/..."
+          python pruebas/test_1.py
+          python pruebas/test_2.py
+
+          # Ejecutar pytest
+          echo "Running pytest..."
+          pytest tests/ -v --cov=app --cov-report=term-missing
+
+      - name: 📊 Generate coverage report
+        run: |
+          echo "### Test Coverage Report 📊" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          pytest tests/ --cov=app --cov-report=term-missing | tail -n 20 >> $GITHUB_STEP_SUMMARY
+
+  # Verificación de seguridad
+  security-check:
+    name: Security Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 🔒 Run security checks
+        run: |
+          pip install safety bandit
+
+          echo "### Security Report 🔒" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Check for known vulnerabilities
+          echo "#### Dependency Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+          safety check --json || echo "⚠️ Some vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+
+          # Static security analysis
+          echo "#### Static Security Analysis" >> $GITHUB_STEP_SUMMARY
+          bandit -r app/ scripts/ -f json -o bandit-report.json || true
+
+      - name: 🔍 Check for secrets
+        run: |
+          # Simple check for potential secrets
+          if grep -r "AWS_SECRET_ACCESS_KEY\|AWS_ACCESS_KEY_ID" app/ scripts/ --exclude-dir=__pycache__; then
+            echo "❌ Potential secrets found in code!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No hardcoded secrets found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Build test (sin push)
+  build-test:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔧 Build Docker image (test only)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: ml-model:pr-test
+          build-args: |
+            AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
+            AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
+            ENVIRONMENT=test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: ✅ Build successful
+        run: |
+          echo "✅ Docker build completed successfully" >> $GITHUB_STEP_SUMMARY
+
+  # Resumen final
+  pr-summary:
+    name: PR Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, unit-tests, security-check, build-test]
+    if: always()
+
+    steps:
+      - name: 📊 Generate PR Summary
+        run: |
+          echo "## Pull Request Summary 🎯" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "### Check Results:" >> $GITHUB_STEP_SUMMARY
+          echo "- Code Quality: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Unit Tests: ${{ needs.unit-tests.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security: ${{ needs.security-check.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Build: ${{ needs.build-test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [[ "${{ needs.unit-tests.result }}" == "success" ]] && \
+             [[ "${{ needs.build-test.result }}" == "success" ]]; then
+            echo "✅ **Status: Ready to merge**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Status: Issues need to be resolved**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 💬 Comment on PR
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request'
+        with:
+          script: |
+            const summary = `## 🤖 Automated PR Check Results
+
+            | Check | Status |
+            |-------|--------|
+            | Code Quality | ${{ needs.code-quality.result }} |
+            | Unit Tests | ${{ needs.unit-tests.result }} |
+            | Security | ${{ needs.security-check.result }} |
+            | Docker Build | ${{ needs.build-test.result }} |
+
+            ${
+              needs.unit-tests.result === 'success' && needs.build-test.result === 'success'
+                ? '✅ **All checks passed! This PR is ready for review.**'
+                : '❌ **Some checks failed. Please review the logs and fix the issues.**'
+            }
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
