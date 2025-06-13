@@ -110,7 +110,7 @@ class ETFPredictionApp:
             st.metric("Días a Predecir", prediction_days)
         
         # Generar predicciones
-        with st.spinner("Generando predicciones..."):
+        with st.spinner("Generando predicciones... Pruebas"):
             predictions = self.predictor.predict(prediction_days)
             
             # 🆕 LOGGING DE PREDICCIONES
