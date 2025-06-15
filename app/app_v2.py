@@ -260,7 +260,7 @@ class ETFPredictionApp:
             st.markdown("---")
             st.markdown(
                 "<div style='text-align: center'>"
-                "<p>🚀 Powered by LSTM Neural Networks | "
+                "<p>🚀 Powered by LSTM Neural Networks || "
                 f"Environment: {os.getenv('ENVIRONMENT', 'dev').upper()}</p>"
                 "</div>", 
                 unsafe_allow_html=True
