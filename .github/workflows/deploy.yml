@@ -290,7 +290,7 @@ jobs:
               print(f"   Last modified: {response['LastModified']}")
               print(f"   Size: {response['ContentLength']} bytes")
           except s3.exceptions.NoSuchKey:
-              print(f"⚠️  Prediction log file not found: {key}")
+              print(f"⚠️  Prediction log file not found in git: {key}")
               print("   This is expected for first deployment")
           except Exception as e:
               print(f"❌ Error checking prediction log: {e}")
