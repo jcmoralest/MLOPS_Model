@@ -124,11 +124,6 @@ streamlit run app/app.py
 
 La aplicación mostrará una gráfica interactiva con los datos reales y el pronóstico de los próximos 200 días para el ETF SPY.
 
-
-## Archivos Vacíos Detectados
-
-- `models/model.pkl` 
-
 ## Notas
 
 - Colaborador: Asegúrate de que los archivos `scaler.pkl`, `X_test.npy`, `y_test.npy` y `modelo_lstm.onnx` estén presentes en las rutas correctas.
@@ -137,9 +132,18 @@ La aplicación mostrará una gráfica interactiva con los datos reales y el pron
 ## Contribuciones
 ¡Las contribuciones son bienvenidas! Por favor abre un issue o pull request para sugerencias o mejoras.
 
+## 📊 Logging de predicciones
+
+Cada vez que se realiza una predicción en los endpoints `dev` o `prod`, el sistema guarda la predicción en un archivo TXT (`predicciones_dev.txt` o `predicciones_prod.txt`) en el bucket S3 configurado.  
+Esto permite monitorear y auditar todas las predicciones realizadas por el sistema.
+
+Puedes consultar estos archivos directamente en S3 para análisis o monitoreo posterior.
+
 ---
 
 **Autores:**  
 - Jonathan Pacheco
 - Julio Morales
-- ICESI - MLOps Proyecto FinalTest CI/CD
+- ICESI - MLOps Proyecto Final
+
+
