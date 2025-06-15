@@ -3,9 +3,9 @@ name: ML Model CI/CD Pipeline
 
 on:
   push:
-    branches: [dev, prod, main]
+    branches: [Dev, Prod]
   pull_request:
-    branches: [dev, prod, main]
+    branches: [Dev, Prod]
 
 # Permisos necesarios para el workflow
 permissions:
@@ -110,7 +110,7 @@ jobs:
 
       - name: 📤 Upload test results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results
           path: |
@@ -149,21 +149,18 @@ jobs:
     name: Build Docker Image
     needs: test
     runs-on: ubuntu-latest
+    if: github.event_name == 'push'
 
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
-      - name: 🔧 Set environment variables
+      - name: 🔧 Set environment
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/prod" ]]; then
+          if [[ "${{ github.ref }}" == "refs/heads/Prod" ]]; then
             echo "ENVIRONMENT=prod" >> $GITHUB_ENV
-            echo "PORT=8501" >> $GITHUB_ENV
-            echo "DEPLOY_ENV=production" >> $GITHUB_ENV
           else
             echo "ENVIRONMENT=dev" >> $GITHUB_ENV
-            echo "PORT=8502" >> $GITHUB_ENV
-            echo "DEPLOY_ENV=development" >> $GITHUB_ENV
           fi
 
       - name: 🐳 Set up Docker Buildx
@@ -172,7 +169,7 @@ jobs:
       - name: 🔐 Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -180,12 +177,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ghcr.io/${{ github.repository }}
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=${{ env.ENVIRONMENT }}-latest
 
       - name: 🐳 Build and push Docker image
@@ -202,14 +197,12 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: 📝 Image Summary
+      - name: 📝 Summary
         run: |
-          echo "### Docker Image Built 🐳" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Registry:** ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Image:** ${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Tags:**" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "### 🐳 Docker Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Tags:** ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Registry:** ghcr.io/${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
 
   # Job 3: Deploy (solo en push a dev o prod)
   deploy:
